@@ -1,35 +1,30 @@
 package com.example.springapi.service;
 
-import com.example.springapi.entity.ImageData;
-import com.example.springapi.respository.StorageRepository;
-import com.example.springapi.util.ImageUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Optional;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Service
 public class StorageService {
-    @Autowired
-    private StorageRepository repository;
-
     public String uploadImage(MultipartFile file) throws IOException {
-
-        ImageData imageData = repository.save(ImageData.builder()
-                .name(file.getOriginalFilename())
-                .type(file.getContentType())
-                .imageData(ImageUtil.compressImage(file.getBytes())).build());
-        if (imageData != null) {
-            return "file uploaded successfully : " + file.getOriginalFilename();
+        String folder = "../JAVA-EE-PROJECT/src/main/webapp/images/";
+        Path directoryPath = Paths.get(folder);
+        if (!Files.exists(directoryPath)) {
+            Files.createDirectories(directoryPath);
         }
-        return null;
-    }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+        String dateTimeString = LocalDateTime.now().format(formatter);
 
-    public byte[] downloadImage(String fileName){
-        Optional<ImageData> dbImageData = repository.findByName(fileName);
-        byte[] images=ImageUtil.decompressImage(dbImageData.get().getImageData());
-        return images;
+        byte[] bytes = file.getBytes();
+        String url = "Image"+dateTimeString+".jpeg";
+        Path path = Paths.get(folder+url);
+        Files.write(path, bytes);
+        return url;
     }
 }
